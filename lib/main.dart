@@ -1,4 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:pingpong/src/ball.dart';
+import 'package:pingpong/src/ball_state.dart';
+import 'package:pingpong/src/rocket.dart';
+import 'package:pingpong/src/start_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'PingPong',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -21,11 +28,102 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
 
   @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+const double rocketStep = 0.1;
+const double ballStep = 0.02;
+const double maxY = 0.95;
+const double minY = -0.95;
+const rocketLength = 1 / 3;
+
+class _MyHomePageState extends State<MyHomePage> {
+  double _upRocketX = 0;
+  double _downRocketX = 0;
+  bool _isRunning = false;
+  final BallState _ballState = BallState();
+  late Timer _timer;
+
+  @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: RawKeyboardListener(
+        focusNode: FocusNode(),
+        autofocus: true,
+        onKey: _onKey,
+        child: SafeArea(
+          child: GestureDetector(
+            onTap: _startGame,
+            child: Stack(
+              children: [
+                // 启动界面
+                StartScreen(isShow: _isRunning),
+                // 顶部的球拍
+                Rocket(x: _upRocketX, y: minY, color: Colors.red),
+                // 乒乓球
+                Ball(x: _ballState.ballX, y: _ballState.ballY),
+                // 底部的球拍
+                Rocket(x: _downRocketX, y: maxY, color: Colors.black),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _startGame() {
+    setState(() => _isRunning = true);
+    _timer = Timer.periodic(
+      const Duration(milliseconds: 50),
+      (timer) => _updateBall(),
+    );
+  }
+
+  void _updateBall() {
+    setState(() {
+      _ballState.update();
+      bool isCollision = _ballState.checkCollision(_upRocketX, _downRocketX);
+      if (isCollision) {
+        _stopGame();
+      }
+    });
+  }
+
+  void _stopGame() {
+    _isRunning = false;
+    _timer.cancel();
+    setState(_reset);
+  }
+
+  void _reset() {
+    _upRocketX = 0;
+    _downRocketX = 0;
+    _ballState.reset();
+  }
+
+  void _onKey(RawKeyEvent? event) {
+    if (event.runtimeType == RawKeyDownEvent) {
+      switch (event?.logicalKey.keyLabel) {
+        case "Arrow Left":
+          setState(() {
+            _upRocketX -= rocketStep;
+            _downRocketX -= rocketStep;
+          });
+          break;
+        case "Arrow Right":
+          setState(() {
+            _upRocketX += rocketStep;
+            _downRocketX += rocketStep;
+          });
+          break;
+        default:
+      }
+    }
   }
 }
