@@ -56,10 +56,11 @@ class BallState {
   }
 
   double _getNewBallX() {
+    const step = ballStep * 2;
     if (hDirection == Direction.right) {
-      return ballX + ballStep;
+      return ballX + step;
     }
-    return ballX - ballStep;
+    return ballX - step;
   }
 
   Direction _getNewVDirection() {

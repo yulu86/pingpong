@@ -109,21 +109,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _onKey(RawKeyEvent? event) {
     if (event.runtimeType == RawKeyDownEvent) {
-      switch (event?.logicalKey.keyLabel) {
-        case "Arrow Left":
-          setState(() {
-            _upRocketX -= rocketStep;
-            _downRocketX -= rocketStep;
-          });
-          break;
-        case "Arrow Right":
-          setState(() {
-            _upRocketX += rocketStep;
-            _downRocketX += rocketStep;
-          });
-          break;
-        default:
+      final keyLabel = event?.logicalKey.keyLabel;
+      double newDownRocketX = _downRocketX;
+      double newUpRocketX = _upRocketX;
+      if (_ballState.vDirection == Direction.down) {
+        newDownRocketX = _getNewRocketX(_downRocketX, keyLabel);
+      } else if (_ballState.vDirection == Direction.up) {
+        newUpRocketX = _getNewRocketX(_upRocketX, keyLabel);
       }
+
+      setState(() {
+        _downRocketX = newDownRocketX;
+        _upRocketX = newUpRocketX;
+      });
     }
+  }
+
+  double _getNewRocketX(double oldRocketX, String? keyLabel) {
+    if (keyLabel == "Arrow Left") {
+      return oldRocketX - rocketStep;
+    } else if (keyLabel == "Arrow Right") {
+      return oldRocketX + rocketStep;
+    }
+    return oldRocketX;
   }
 }
